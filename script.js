@@ -1,105 +1,75 @@
+ const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+let felipe = { x: 50, y: 300, color: '#4169E1' };
+let matheus = { x: 650, y: 300, color: '#FF69B4' };
+let floorY = 330;
+let hugged = false;
+let hearts = [];
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let x = 0;
-let messages = [
-  "Matheus, você é meu mundo.",
-  "Cada passo é por você.",
-  "Tenho tanto orgulho de você.",
-  "Você importa mais do que tudo.",
-  "Te amo infinitamente. ❤️"
-];
-let msgIndex = 0;
-let hero = { x: 50, y: canvas.height - 150, color: '#1f1f1f' };
-let target = { x: canvas.width - 150, y: canvas.height - 150, color: '#ff4d6d' };
-
-
-let felipeImg = new Image();
-felipeImg.src = "felipe.png";
-let matheusImg = new Image();
-matheusImg.src = "matheus.png";
-
-function drawStickman(x, y, color, isFelipe = true) {
-  ctx.drawImage(isFelipe ? felipeImg : matheusImg, x - 16, y - 32, 32, 32);
-}(x, y, color) {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 4;
-  // Head
+function drawStickman({ x, y, color }) {
+  ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.arc(x, y, 10, 0, Math.PI * 2);
-  ctx.stroke();
-  // Body
-  ctx.beginPath();
-  ctx.moveTo(x, y + 10);
-  ctx.lineTo(x, y + 40);
-  ctx.stroke();
-  // Arms
-  ctx.beginPath();
-  ctx.moveTo(x - 15, y + 20);
-  ctx.lineTo(x + 15, y + 20);
-  ctx.stroke();
-  // Legs
-  ctx.beginPath();
-  ctx.moveTo(x, y + 40);
-  ctx.lineTo(x - 10, y + 60);
-  ctx.moveTo(x, y + 40);
-  ctx.lineTo(x + 10, y + 60);
-  ctx.stroke();
+  ctx.arc(x, y - 20, 10, 0, Math.PI * 2); // cabeça
+  ctx.fill();
+  ctx.fillRect(x - 5, y - 10, 10, 20); // corpo
+  ctx.fillRect(x - 15, y + 10, 10, 20); // perna esquerda
+  ctx.fillRect(x + 5, y + 10, 10, 20); // perna direita
+  ctx.fillRect(x - 15, y - 10, 10, 10); // braço esquerdo
+  ctx.fillRect(x + 5, y - 10, 10, 10); // braço direito
 }
 
-function drawHeart(x, y) {
-  ctx.fillStyle = "#ff4d6d";
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.bezierCurveTo(x - 10, y - 10, x - 25, y + 10, x, y + 25);
-  ctx.bezierCurveTo(x + 25, y + 10, x + 10, y - 10, x, y);
-  ctx.fill();
+function drawGround() {
+  ctx.fillStyle = "#228B22";
+  ctx.fillRect(0, floorY, canvas.width, 70);
+}
+
+function drawHearts() {
+  ctx.font = "24px Arial";
+  ctx.fillStyle = "red";
+  hearts.forEach(h => {
+    ctx.fillText("❤️", h.x, h.y);
+    h.y -= 1;
+  });
+}
+
+function drawText() {
+  ctx.font = "20px Comic Sans MS";
+  ctx.fillStyle = "#ff1493";
+  ctx.fillText("Matheus, eu te amo. Tenho orgulho de você todos os dias!", 120, 50);
+  ctx.fillText("Obrigado por existir na minha vida ❤️ - Felipe", 160, 80);
+}
+
+function update() {
+  if (!hugged) {
+    if (felipe.x < matheus.x - 40) {
+      felipe.x += 2;
+    } else {
+      hugged = true;
+      for (let i = 0; i < 40; i++) {
+        hearts.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height });
+      }
+    }
+  }
 }
 
 function drawScene() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGround();
+  drawStickman(felipe);
+  drawStickman(matheus);
+  drawText();
 
-  // Background ground
-  ctx.fillStyle = "#6cbb3c";
-  ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
-
-  // Felipe (left)
-  drawStickman(hero.x, hero.y, hero.color, true);
-
-  // Matheus (right)
-  drawStickman(target.x, target.y, target.color, false);
-
-  // Message
-  if (msgIndex < messages.length) {
-    ctx.fillStyle = "#000";
-    ctx.font = "24px sans-serif";
-    ctx.fillText(messages[msgIndex], canvas.width / 2 - 200, 100);
+  if (hugged) {
+    // Beijo/abraço visual
+    ctx.fillStyle = "pink";
+    ctx.beginPath();
+    ctx.arc((felipe.x + matheus.x) / 2, felipe.y - 30, 10, 0, Math.PI * 2);
+    ctx.fill();
+    drawHearts();
   }
 
-  if (hero.x < target.x - 50) {
-    hero.x += 2;
-  } else if (msgIndex < messages.length - 1) {
-    msgIndex++;
-    hero.x = 50;
-  } else {
-    // Final heart
-    drawHeart(canvas.width / 2, canvas.height / 2);
-    ctx.fillStyle = "#000";
-    ctx.font = "28px sans-serif";
-    
-    ctx.fillText("Felipe ❤️ Matheus – Um mundo só nosso", canvas.width / 2 - 200, canvas.height / 2 + 60);
-    for (let i = 0; i < 10; i++) {
-      drawHeart(Math.random() * canvas.width, Math.random() * canvas.height);
-    }
-    // beijo (coração central)
-    drawHeart(hero.x + 40, hero.y);
-    
-  }
-
+  update();
   requestAnimationFrame(drawScene);
 }
 
